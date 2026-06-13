@@ -1,0 +1,825 @@
+
+<!DOCTYPE html>
+<html lang="ku">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreOS Elite Pro | Ultra Edition v3.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* COREOS ELITE PRO - ULTRA STYLESHEET
+           Architecture: Modular CSS Variables & Layered Blurs
+        */
+        :root {
+            --bg-deep: #020617;
+            --bg-surface: rgba(15, 23, 42, 0.7);
+            --bg-surface-solid: #0f172a;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --accent-muted: rgba(99, 102, 241, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: rgba(255, 255, 255, 0.08);
+            --glass: blur(40px);
+            --radius-lg: 35px;
+            --radius-md: 20px;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --matrix-color: #00ff41;
+        }
+
+        /* Matrix Global Override */
+        body.matrix-active {
+            --accent: var(--matrix-color);
+            --accent-glow: rgba(0, 255, 65, 0.4);
+            filter: sepia(0.2) hue-rotate(85deg) brightness(1.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            cursor: crosshair;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Layered Background Background */
+        #core-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: radial-gradient(circle at 50% 50%, #1e293b 0%, #020617 100%);
+        }
+
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 2s ease;
+            pointer-events: none;
+        }
+
+        body.matrix-active #matrix-canvas {
+            opacity: 0.15;
+        }
+
+        /* Auth/Login Module */
+        #auth-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: var(--bg-deep);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 1s cubic-bezier(0.87, 0, 0.13, 1);
+        }
+
+        .auth-card {
+            background: var(--bg-surface);
+            backdrop-filter: var(--glass);
+            padding: 80px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            text-align: center;
+            width: 500px;
+            box-shadow: 0 50px 100px -20px rgba(0,0,0,0.7);
+        }
+
+            .auth-card h1 {
+                font-size: 56px;
+                font-weight: 900;
+                letter-spacing: -4px;
+                margin-bottom: 10px;
+            }
+
+            .auth-card span {
+                color: var(--accent);
+            }
+
+        /* Layout Structure */
+        #os-shell {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+
+        .os-navbar {
+            height: 100px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 60px;
+            background: rgba(2, 6, 23, 0.3);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .os-main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 40px;
+            padding: 40px 60px;
+            overflow-y: auto;
+            max-width: 2200px;
+            margin: 0 auto;
+            width: 100%;
+            padding-bottom: 150px;
+        }
+
+        /* Widget Systems */
+        .widget {
+            background: var(--bg-surface);
+            backdrop-filter: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            margin-bottom: 40px;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+            .widget:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+                border-color: var(--accent-glow);
+            }
+
+        .widget-title {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .widget-title::after {
+                content: "";
+                flex: 1;
+                height: 1px;
+                background: linear-gradient(to right, var(--accent-glow), transparent);
+            }
+
+        /* Page Routing */
+        .page {
+            display: none;
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+            .page.active {
+                display: block;
+            }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Neural YouTube Integration */
+        .search-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .player-frame {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        }
+
+        /* Form Elements */
+        input, textarea {
+            width: 100%;
+            padding: 20px 25px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            color: white;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+            input:focus, textarea:focus {
+                border-color: var(--accent);
+                background: rgba(0, 0, 0, 0.6);
+                box-shadow: 0 0 20px var(--accent-glow);
+            }
+
+        button {
+            padding: 18px 35px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 18px;
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+            button:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 15px 30px var(--accent-glow);
+                filter: brightness(1.2);
+            }
+
+            button.secondary {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid var(--border);
+            }
+
+        /* Profile System */
+        .profile-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .avatar-vault {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            border: 6px solid var(--accent);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 50px var(--accent-glow);
+        }
+
+            .avatar-vault img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        /* Dock System */
+        .os-dock {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: var(--glass);
+            padding: 18px 45px;
+            border-radius: 45px;
+            border: 1px solid var(--border);
+            display: flex;
+            gap: 35px;
+            z-index: 1000;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+        }
+
+        .dock-icon {
+            width: 65px;
+            height: 65px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+            .dock-icon:hover, .dock-icon.active {
+                background: var(--accent);
+                transform: scale(1.25) translateY(-20px);
+                box-shadow: 0 15px 30px var(--accent-glow);
+            }
+
+        /* Telemetry & Bars */
+        .stat-row {
+            margin-bottom: 25px;
+        }
+
+        .stat-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .stat-bar-bg {
+            height: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 1s ease;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* Toast Notifications */
+        #core-toast {
+            position: fixed;
+            top: 40px;
+            right: 40px;
+            padding: 20px 40px;
+            background: var(--bg-surface);
+            backdrop-filter: var(--glass);
+            border-left: 5px solid var(--accent);
+            border-radius: 15px;
+            transform: translateX(200%);
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 10000;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+            #core-toast.visible {
+                transform: translateX(0);
+            }
+
+        /* Matrix Animation */
+        #matrix-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: var(--accent);
+            }
+    </style>
+</head>
+<body id="core-body">
+
+    <canvas id="core-canvas"></canvas>
+    <canvas id="matrix-canvas"></canvas>
+    <div id="core-toast">SYSTEM SYNC COMPLETE</div>
+
+    <div id="auth-overlay">
+        <div class="auth-card">
+            <h1 id="auth-logo">CORE<span>OS</span></h1>
+            <p style="color:var(--text-secondary); letter-spacing: 2px; font-size: 10px; margin-bottom: 50px;">VERSION 3.0 // ELITE ULTRA</p>
+            <div style="text-align: left;">
+                <label style="font-size: 10px; font-weight: 800; color: var(--accent); margin-bottom: 10px; display: block;">OPERATOR CRYPTO-KEY</label>
+                <input id="user-entry" type="text" placeholder="Enter Identity..." style="margin-bottom: 25px;">
+                <button onclick="os.launch()" style="width: 100%;">Initialize Core</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="os-shell">
+        <nav class="os-navbar">
+            <div style="font-weight: 900; font-size: 32px; letter-spacing: -3px;">CORE<span>OS</span></div>
+            <div style="display: flex; gap: 30px; align-items: center;">
+                <div id="net-status" style="color: var(--success); font-size: 10px; font-weight: 800;">● NEURAL LINK STABLE</div>
+                <button onclick="location.reload()" class="secondary" style="padding: 10px 20px;">Hard Reset</button>
+            </div>
+        </nav>
+
+        <main class="os-main">
+            <div id="routing-engine">
+
+                <div id="page-home" class="page active">
+                    <div class="widget">
+                        <div class="widget-title">Neural Media Stream</div>
+                        <div class="search-container">
+                            <input id="yt-query" placeholder="Search keywords or drop YouTube link...">
+                            <button onclick="os.media.process()">Execute</button>
+                        </div>
+                        <div class="player-frame">
+                            <iframe id="main-player" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                        </div>
+                    </div>
+
+                    <div class="widget">
+                        <div class="widget-title">Global Database Search</div>
+                        <div class="search-container">
+                            <input id="google-query" placeholder="Query the web...">
+                            <button onclick="os.search.google()" class="secondary">Google</button>
+                            <button onclick="os.search.wiki()" class="secondary">Wiki</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="page-profile" class="page">
+                    <div class="widget">
+                        <div class="widget-title">Operator Profile</div>
+                        <div class="profile-header">
+                            <div class="avatar-vault" onclick="document.getElementById('pfp-input').click()">
+                                <img id="pfp-display" src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop">
+                            </div>
+                            <input type="file" id="pfp-input" style="display:none;" onchange="os.user.updatePhoto(event)">
+                            <h2 id="display-username" style="font-size: 42px; font-weight: 900; letter-spacing: -2px;">OPERATOR</h2>
+                        </div>
+                        <div style="margin-top: 40px;">
+                            <label style="font-size: 11px; font-weight: 800; color: var(--accent);">NEURAL LOG / BIO</label>
+                            <textarea id="user-bio" style="margin-top: 15px; height: 150px; resize: none;" placeholder="Input biometric history..."></textarea>
+                            <button onclick="os.user.save()" style="width: 100%; margin-top: 20px;">Sync Biometrics</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="page-settings" class="page">
+                    <div class="widget">
+                        <div class="widget-title">System Customization</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                            <div class="widget" style="margin-bottom: 0;">
+                                <p style="font-size: 11px; font-weight: 800; margin-bottom: 20px;">THEME ENGINE</p>
+                                <div style="display: flex; gap: 15px;">
+                                    <div style="width: 40px; height: 40px; background: #6366f1; border-radius: 12px; cursor: pointer;" onclick="os.theme.set('#6366f1')"></div>
+                                    <div style="width: 40px; height: 40px; background: #10b981; border-radius: 12px; cursor: pointer;" onclick="os.theme.set('#10b981')"></div>
+                                    <div style="width: 40px; height: 40px; background: #f43f5e; border-radius: 12px; cursor: pointer;" onclick="os.theme.set('#f43f5e')"></div>
+                                    <div style="width: 40px; height: 40px; background: #f59e0b; border-radius: 12px; cursor: pointer;" onclick="os.theme.set('#f59e0b')"></div>
+                                </div>
+                            </div>
+                            <div class="widget" style="margin-bottom: 0;">
+                                <p style="font-size: 11px; font-weight: 800; margin-bottom: 20px;">MODE TOGGLES</p>
+                                <button onclick="os.theme.toggleMatrix()" style="width: 100%;">Matrix Protocol</button>
+                            </div>
+                        </div>
+                        <button onclick="os.registry.wipe()" style="margin-top: 30px; width: 100%; background: transparent; border: 1px solid var(--error); color: var(--error);">Purge All System Data</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <aside>
+                <div class="widget" style="text-align: center;">
+                    <div id="os-clock" style="font-size: 48px; font-weight: 900; letter-spacing: 2px; font-family: 'JetBrains Mono';">00:00</div>
+                    <div id="os-date" style="font-size: 11px; font-weight: 800; color: var(--accent); margin-top: 5px;">LOADING CALENDAR...</div>
+                </div>
+
+                <div class="widget">
+                    <div class="widget-title">Hardware Telemetry</div>
+                    <div class="stat-row">
+                        <div class="stat-label"><span>CPU LOAD</span><span id="cpu-num">0%</span></div>
+                        <div class="stat-bar-bg"><div id="cpu-fill" class="stat-bar-fill"></div></div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-label"><span>MEMORY ALLOCATION</span><span id="mem-num">0%</span></div>
+                        <div class="stat-bar-bg"><div id="mem-fill" class="stat-bar-fill" style="background: var(--success);"></div></div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-label"><span>NEURAL LATENCY</span><span id="lat-num">0ms</span></div>
+                        <div class="stat-bar-bg"><div id="lat-fill" class="stat-bar-fill" style="background: var(--warning);"></div></div>
+                    </div>
+                </div>
+
+                <div class="widget">
+                    <div class="widget-title">Secure Broadcast Log</div>
+                    <div id="chat-vault" style="height: 200px; overflow-y: auto; font-family: 'JetBrains Mono'; font-size: 11px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; border: 1px solid var(--border);">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <input id="chat-entry" placeholder="Message..." style="padding: 12px;" onkeypress="if(event.key==='Enter') os.chat.send()">
+                        <button onclick="os.chat.send()" style="padding: 10px 20px;">></button>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <div class="os-dock">
+            <div class="dock-icon active" onclick="os.router.nav('page-home', this)">🏠</div>
+            <div class="dock-icon" onclick="os.router.nav('page-profile', this)">👤</div>
+            <div class="dock-icon" onclick="os.router.nav('page-settings', this)">⚙️</div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * COREOS ULTRA REGISTRY
+         * The central management object for all system states.
+         */
+        
+        const os = {
+
+            registry: {
+                user: "Operator",
+                theme: "#6366f1",
+                isMatrix: false,
+                logs: [],
+                save: function () {
+                    localStorage.setItem('core_registry', JSON.stringify({
+                        user: this.user,
+                        theme: this.theme,
+                        isMatrix: this.isMatrix,
+                        logs: this.logs
+                    }));
+                },
+                load: function () {
+                    const data = JSON.parse(localStorage.getItem('core_registry'));
+                    if (data) {
+                        this.user = data.user;
+                        this.theme = data.theme;
+                        this.isMatrix = data.isMatrix;
+                        this.logs = data.logs || [];
+                    }
+                },
+                wipe: function () {
+                    if (confirm("CRITICAL: This will destroy all neural links. Proceed?")) {
+                        localStorage.clear();
+                        location.reload();
+                    }
+                }
+            },
+
+            launch: function () {
+                this.registry.user = document.getElementById('user-entry').value || "Operator";
+                document.getElementById('display-username').innerText = this.registry.user.toUpperCase();
+
+                // Transition UI
+                const auth = document.getElementById('auth-overlay');
+                const shell = document.getElementById('os-shell');
+
+                auth.style.transform = "translateY(-100%)";
+                shell.style.display = "flex";
+                setTimeout(() => shell.style.opacity = "1", 100);
+
+                // Initializations
+                this.initSystems();
+                this.toast("COREOS ULTRA v3.0 ONLINE");
+            },
+
+            initSystems: function () {
+                this.registry.load();
+                this.theme.set(this.registry.theme, true);
+                if (this.registry.isMatrix) this.theme.toggleMatrix(true);
+
+                document.getElementById('user-bio').value = localStorage.getItem('bio_' + this.registry.user) || "";
+                const pfp = localStorage.getItem('pfp_' + this.registry.user);
+                if (pfp) document.getElementById('pfp-display').src = pfp;
+
+                this.background.start();
+                this.telemetry.start();
+                this.chat.render();
+                this.clock.start();
+            },
+
+            router: {
+                nav: function (id, el) {
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    document.getElementById(id).classList.add('active');
+                    document.querySelectorAll('.dock-icon').forEach(i => i.classList.remove('active'));
+                    el.classList.add('active');
+                    os.toast(`Switched to ${id.split('-')[1].toUpperCase()}`);
+                }
+            },
+
+            media: {
+                process: function () {
+                    const q = document.getElementById('yt-query').value;
+                    let id = "";
+                    if (q.includes('v=')) id = q.split('v=')[1].split('&')[0];
+                    else if (q.includes('youtu.be/')) id = q.split('youtu.be/')[1].split('?')[0];
+                    else {
+                        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`, '_blank');
+                        return;
+                    }
+                    document.getElementById('main-player').src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+                    os.toast("Visual Feed Connected");
+                }
+            },
+
+            search: {
+                google: function () {
+                    const q = document.getElementById('google-query').value;
+                    if (q) window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, '_blank');
+                },
+                wiki: function () {
+                    const q = document.getElementById('google-query').value;
+                    if (q) window.open(`https://en.wikipedia.org/wiki/${encodeURIComponent(q)}`, '_blank');
+                }
+            },
+
+            user: {
+                save: function () {
+                    localStorage.setItem('bio_' + os.registry.user, document.getElementById('user-bio').value);
+                    os.toast("Biometric Data Synced");
+                },
+                updatePhoto: function (e) {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (f) => {
+                        document.getElementById('pfp-display').src = f.target.result;
+                        localStorage.setItem('pfp_' + os.registry.user, f.target.result);
+                        os.toast("Visual ID Updated");
+                    };
+                    reader.readAsDataURL(file);
+                }
+            },
+
+            theme: {
+                set: function (color, quiet = false) {
+                    document.documentElement.style.setProperty('--accent', color);
+                    document.documentElement.style.setProperty('--accent-glow', color + '66');
+                    os.registry.theme = color;
+                    os.registry.save();
+                    if (!quiet) os.toast("Interface Recalibrated");
+                },
+                toggleMatrix: function (quiet = false) {
+                    const body = document.getElementById('core-body');
+                    body.classList.toggle('matrix-active');
+                    os.registry.isMatrix = body.classList.contains('matrix-active');
+                    os.registry.save();
+                    if (!quiet) os.toast("Matrix Protocol Toggled");
+
+                    if (os.registry.isMatrix) os.background.startMatrix();
+                }
+            },
+
+            chat: {
+                send: function () {
+                    const entry = document.getElementById('chat-entry');
+                    if (!entry.value.trim()) return;
+                    os.registry.logs.push({
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        msg: entry.value
+                    });
+                    if (os.registry.logs.length > 20) os.registry.logs.shift();
+                    os.registry.save();
+                    entry.value = "";
+                    this.render();
+                },
+                render: function () {
+                    const vault = document.getElementById('chat-vault');
+                    vault.innerHTML = os.registry.logs.map(l => `
+                                            <div style="margin-bottom: 10px; color: var(--text-secondary)">
+                                                <span style="color: var(--accent)">[${l.time}]</span> ${l.msg}
+                                            </div>
+                                        `).join('');
+                    vault.scrollTop = vault.scrollHeight;
+                }
+            },
+
+            telemetry: {
+                start: function () {
+                    setInterval(() => {
+                        const cpu = Math.floor(Math.random() * 20) + 15;
+                        const mem = Math.floor(Math.random() * 10) + 60;
+                        const lat = Math.floor(Math.random() * 40) + 10;
+
+                        document.getElementById('cpu-fill').style.width = cpu + "%";
+                        document.getElementById('cpu-num').innerText = cpu + "%";
+
+                        document.getElementById('mem-fill').style.width = mem + "%";
+                        document.getElementById('mem-num').innerText = mem + "%";
+
+                        document.getElementById('lat-fill').style.width = (lat / 2) + "%";
+                        document.getElementById('lat-num').innerText = lat + "ms";
+                    }, 2000);
+                }
+            },
+
+            clock: {
+                start: function () {
+                    setInterval(() => {
+                        const n = new Date();
+                        document.getElementById('os-clock').innerText = n.toLocaleTimeString([], { hour12: false });
+                        document.getElementById('os-date').innerText = n.toDateString().toUpperCase();
+                    }, 1000);
+                }
+            },
+
+            background: {
+                start: function () {
+                    const c = document.getElementById('core-canvas');
+                    const ctx = c.getContext('2d');
+                    let pts = [];
+
+                    const resize = () => { c.width = window.innerWidth; c.height = window.innerHeight; };
+                    window.onresize = resize; resize();
+
+                    for (let i = 0; i < 120; i++) {
+                        pts.push({
+                            x: Math.random() * c.width,
+                            y: Math.random() * c.height,
+                            vx: (Math.random() - 0.5) * 0.5,
+                            vy: (Math.random() - 0.5) * 0.5,
+                            r: Math.random() * 2
+                        });
+                    }
+
+                    const loop = () => {
+                        ctx.clearRect(0, 0, c.width, c.height);
+                        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+
+                        pts.forEach(p => {
+                            p.x += p.vx; p.y += p.vy;
+                            if (p.x < 0 || p.x > c.width) p.vx *= -1;
+                            if (p.y < 0 || p.y > c.height) p.vy *= -1;
+
+                            ctx.globalAlpha = 0.3;
+                            ctx.beginPath();
+                            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                            ctx.fill();
+                        });
+                        requestAnimationFrame(loop);
+                    };
+                    loop();
+                },
+                startMatrix: function () {
+                    const c = document.getElementById('matrix-canvas');
+                    const ctx = c.getContext('2d');
+                    c.width = window.innerWidth;
+                    c.height = window.innerHeight;
+
+                    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
+                    const fontSize = 19;
+                    const columns = c.width / fontSize;
+                    const drops = [];
+                    for (let i = 0; i < columns; i++) drops[i] = 1;
+
+                    const draw = () => {
+                        ctx.fillStyle = "rgba(0,0,0,0.05)";
+                        ctx.fillRect(0, 0, c.width, c.height);
+                        ctx.fillStyle = "#0F0";
+                        ctx.font = fontSize + "px arial";
+
+                        for (let i = 0; i < drops.length; i++) {
+                            const text = letters.charAt(Math.floor(Math.random() * letters.length));
+                            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                            if (drops[i] * fontSize > c.height && Math.random() > 0.975) drops[i] = 0;
+                            drops[i]++;
+                        }
+                    };
+                    setInterval(draw, 33);
+                }
+            },
+
+            toast: function (msg) {
+                const t = document.getElementById('core-toast');
+                t.innerText = msg;
+                t.classList.add('visible');
+                setTimeout(() => t.classList.remove('visible'), 3000);
+            }
+        };
+
+        // Final UI Polish
+        window.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 10;
+            const y = (e.clientY / window.innerHeight - 0.5) * 10;
+            document.getElementById('core-canvas').style.transform = `translate(${x}px, ${y}px)`;
+        });
+    </script>
+</body>
+</html>
